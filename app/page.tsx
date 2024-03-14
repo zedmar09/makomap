@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaGlobeAfrica } from "react-icons/fa";
 import { IoCall } from "react-icons/io5";
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -18,30 +18,31 @@ const pharmacies = [
 
 export default function Home() {
   const mapContainer = useRef<HTMLDivElement | null>(null);
-  let map: mapboxgl.Map | null = null;
+ // Inside the component
+  const [map, setMap] = useState<mapboxgl.Map | null>(null);
 
   useEffect(() => {
-    if (mapContainer.current) {
-      map = new mapboxgl.Map({
+    if (mapContainer.current && !map) {
+      const newMap = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [-73.7562, 42.6526], // New York (Albany)
         zoom: 15
       });
-
+      
       // Add geocoder control
       const geocoder = new MapboxGeocoder({
         accessToken: mapboxgl.accessToken,
         mapboxgl: mapboxgl,
         placeholder: 'Search for a location'
       });
-
+  
       // Add geocoder to the upper right corner
-      map.addControl(geocoder, 'top-right');
-
+      newMap.addControl(geocoder, 'top-right');
+  
       // Add zoom in and zoom out controls
-      map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
+      newMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+  
       // Add markers for pharmacies
       pharmacies.forEach(pharmacy => {
         const [lng, lat] = pharmacy.coordinates;
@@ -49,16 +50,18 @@ export default function Home() {
         new mapboxgl.Marker()
           .setLngLat([lng, lat])
           .setPopup(popup)
-          .addTo(map);
+          .addTo(newMap);
       });
+  
+      setMap(newMap);
     }
-
+    
     return () => {
       if (map) {
         map.remove();
       }
     };
-  }, []);
+  }, [map]);
 
   return (
     <div className="container">
